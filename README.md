@@ -1,0 +1,2 @@
+# lotrlcg
+LotR LCG tool
