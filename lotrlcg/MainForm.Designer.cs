@@ -39,14 +39,17 @@
 			this.CoreProxiesBackgroundWorker = new System.ComponentModel.BackgroundWorker();
 			this.HoverToolTip = new System.Windows.Forms.ToolTip(this.components);
 			this.CardBacksCheckbox = new System.Windows.Forms.CheckBox();
+			this.UpdateDbButton = new System.Windows.Forms.Button();
+			this.DbBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+			this.ClearDbButton = new System.Windows.Forms.Button();
 			this.MainStatusStrip.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// PlaceholdersButton
 			// 
-			this.PlaceholdersButton.Location = new System.Drawing.Point(12, 12);
+			this.PlaceholdersButton.Location = new System.Drawing.Point(12, 70);
 			this.PlaceholdersButton.Name = "PlaceholdersButton";
-			this.PlaceholdersButton.Size = new System.Drawing.Size(223, 23);
+			this.PlaceholdersButton.Size = new System.Drawing.Size(222, 23);
 			this.PlaceholdersButton.TabIndex = 0;
 			this.PlaceholdersButton.Text = "Placeholders";
 			this.PlaceholdersButton.UseVisualStyleBackColor = true;
@@ -54,7 +57,7 @@
 			// 
 			// CoreProxiesButton
 			// 
-			this.CoreProxiesButton.Location = new System.Drawing.Point(13, 58);
+			this.CoreProxiesButton.Location = new System.Drawing.Point(13, 99);
 			this.CoreProxiesButton.Name = "CoreProxiesButton";
 			this.CoreProxiesButton.Size = new System.Drawing.Size(222, 23);
 			this.CoreProxiesButton.TabIndex = 1;
@@ -64,12 +67,13 @@
 			// 
 			// MainStatusStrip
 			// 
+			this.MainStatusStrip.ImageScalingSize = new System.Drawing.Size(32, 32);
 			this.MainStatusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ProgressBar,
             this.StatusLabel});
-			this.MainStatusStrip.Location = new System.Drawing.Point(0, 111);
+			this.MainStatusStrip.Location = new System.Drawing.Point(0, 150);
 			this.MainStatusStrip.Name = "MainStatusStrip";
-			this.MainStatusStrip.Size = new System.Drawing.Size(251, 22);
+			this.MainStatusStrip.Size = new System.Drawing.Size(251, 25);
 			this.MainStatusStrip.SizingGrip = false;
 			this.MainStatusStrip.TabIndex = 2;
 			this.HoverToolTip.SetToolTip(this.MainStatusStrip, "ToolTip");
@@ -78,13 +82,13 @@
 			// ProgressBar
 			// 
 			this.ProgressBar.Name = "ProgressBar";
-			this.ProgressBar.Size = new System.Drawing.Size(50, 16);
+			this.ProgressBar.Size = new System.Drawing.Size(50, 19);
 			// 
 			// StatusLabel
 			// 
 			this.StatusLabel.AutoToolTip = true;
 			this.StatusLabel.Name = "StatusLabel";
-			this.StatusLabel.Size = new System.Drawing.Size(67, 17);
+			this.StatusLabel.Size = new System.Drawing.Size(67, 20);
 			this.StatusLabel.Text = "StatusLabel";
 			// 
 			// PlaceholdersBackgroundWorker
@@ -108,18 +112,48 @@
 			this.CardBacksCheckbox.AutoSize = true;
 			this.CardBacksCheckbox.Checked = true;
 			this.CardBacksCheckbox.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.CardBacksCheckbox.Location = new System.Drawing.Point(13, 87);
+			this.CardBacksCheckbox.Location = new System.Drawing.Point(13, 128);
 			this.CardBacksCheckbox.Name = "CardBacksCheckbox";
 			this.CardBacksCheckbox.Size = new System.Drawing.Size(80, 17);
 			this.CardBacksCheckbox.TabIndex = 3;
 			this.CardBacksCheckbox.Text = "Card backs";
 			this.CardBacksCheckbox.UseVisualStyleBackColor = true;
 			// 
+			// UpdateDbButton
+			// 
+			this.UpdateDbButton.Location = new System.Drawing.Point(12, 41);
+			this.UpdateDbButton.Name = "UpdateDbButton";
+			this.UpdateDbButton.Size = new System.Drawing.Size(222, 23);
+			this.UpdateDbButton.TabIndex = 4;
+			this.UpdateDbButton.Text = "Update DB";
+			this.UpdateDbButton.UseVisualStyleBackColor = true;
+			this.UpdateDbButton.Click += new System.EventHandler(this.UpdateDbButton_Click);
+			// 
+			// DbBackgroundWorker
+			// 
+			this.DbBackgroundWorker.WorkerReportsProgress = true;
+			this.DbBackgroundWorker.WorkerSupportsCancellation = true;
+			this.DbBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.DbBackgroundWorker_DoWork);
+			this.DbBackgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.DbBackgroundWorker_ProgressChanged);
+			this.DbBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.DbBackgroundWorker_RunWorkerCompleted);
+			// 
+			// ClearDbButton
+			// 
+			this.ClearDbButton.Location = new System.Drawing.Point(13, 12);
+			this.ClearDbButton.Name = "ClearDbButton";
+			this.ClearDbButton.Size = new System.Drawing.Size(222, 23);
+			this.ClearDbButton.TabIndex = 5;
+			this.ClearDbButton.Text = "Clear DB";
+			this.ClearDbButton.UseVisualStyleBackColor = true;
+			this.ClearDbButton.Click += new System.EventHandler(this.ClearDbButton_Click);
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(251, 133);
+			this.ClientSize = new System.Drawing.Size(251, 175);
+			this.Controls.Add(this.ClearDbButton);
+			this.Controls.Add(this.UpdateDbButton);
 			this.Controls.Add(this.CardBacksCheckbox);
 			this.Controls.Add(this.MainStatusStrip);
 			this.Controls.Add(this.CoreProxiesButton);
@@ -146,6 +180,9 @@
 		private System.ComponentModel.BackgroundWorker CoreProxiesBackgroundWorker;
 		private System.Windows.Forms.ToolTip HoverToolTip;
 		private System.Windows.Forms.CheckBox CardBacksCheckbox;
+		private System.Windows.Forms.Button UpdateDbButton;
+		private System.ComponentModel.BackgroundWorker DbBackgroundWorker;
+		private System.Windows.Forms.Button ClearDbButton;
 	}
 }
 

@@ -21,6 +21,7 @@ namespace lotrlcg
 		// paths
 		private const string RingsDB  = "https://ringsdb.com/";
 		private const string CacheDir = "cache";
+		private const string LogFile  = "log.txt";
 
 		// physical card dimensions
 		private const int PhysicalCardWidth   = 246; // 2.460 inch
@@ -41,6 +42,11 @@ namespace lotrlcg
 			// create cache directory
 			if (!Directory.Exists(CacheDir))
 				Directory.CreateDirectory(CacheDir);
+
+			// clear log file
+			if (File.Exists(LogFile))
+				File.Delete(LogFile);
+			File.Create(LogFile);
 
 			// load card back
 			Stream bitmapStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("lotrlcg.card_back.png");
@@ -64,12 +70,76 @@ namespace lotrlcg
 			worker.ReportProgress(0, "Fetching card info from RingsDB.");
 			using (HttpClient client = new HttpClient())
 			{
-				string response = await client.GetStringAsync(url);
-				string cardsJson = JToken.Parse(response).ToString(Formatting.Indented);
-				File.WriteAllText(cacheFile, cardsJson);
+				try
+				{
+					string response = await client.GetStringAsync(url);
+					string cardsJson = JToken.Parse(response).ToString(Formatting.Indented);
+					File.WriteAllText(cacheFile, cardsJson);
 
-				return cardsJson;
+					return cardsJson;
+				}
+				catch (Exception ex)
+				{
+					File.AppendAllLines(LogFile, new string[]
+					{
+						$"Error fetching Json:",
+						$"  URL  : {url}",
+						$"  Cache: {cacheFile}",
+						$"  Error: {ex.Message}",
+					});
+					return null;
+				}
 			}
+		}
+
+
+
+		private string CachedImagePath(Card c)
+		{
+			return CacheDir + "/" + Path.GetFileName(c.Imagesrc);
+		}
+
+
+
+		private bool DownloadCardImage(Card c)
+		{
+			string imgPath = CachedImagePath(c);
+			if (File.Exists(imgPath))
+				return true;
+
+			using (WebClient client = new WebClient())
+			{
+				try
+				{
+					client.DownloadFile(new Uri(RingsDB + c.Imagesrc), imgPath);
+					return true;
+				}
+				catch (Exception ex)
+				{
+					File.AppendAllLines(LogFile, new string[]
+					{
+						$"Error downloading card image:",
+						$"  Name : {c.Name}",
+						$"  Pack : {c.PackName}",
+						$"  URL  : {c.Url}",
+						$"  Image: {RingsDB + c.Imagesrc}",
+						$"  Error: {ex.Message}",
+						""
+					});
+					return false;
+				}
+			}
+		}
+
+
+
+		private Image GetCardImage(Card c)
+		{
+			if (!DownloadCardImage(c))
+				return null;
+
+			// create Image
+			return Image.FromFile(CachedImagePath(c));
 		}
 
 
@@ -89,6 +159,68 @@ namespace lotrlcg
 		private void StatusStrip_MouseHover(object sender, EventArgs e)
 		{
 			HoverToolTip.SetToolTip(sender as StatusStrip, StatusLabel.ToolTipText);
+		}
+
+
+
+		//----------------------------------------------------------------------------------------------------------------------
+		// Database
+		//----------------------------------------------------------------------------------------------------------------------
+		private void ClearDbButton_Click(object sender, EventArgs e)
+		{
+			Directory.Delete(CacheDir, true);
+			Directory.CreateDirectory(CacheDir);
+		}
+
+
+
+		private void UpdateDbButton_Click(object sender, EventArgs e)
+		{
+			UpdateDbButton.Enabled = false;
+			if (!DbBackgroundWorker.IsBusy)
+				DbBackgroundWorker.RunWorkerAsync();
+		}
+
+
+
+		private void DbBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+		{
+			BackgroundWorker worker = sender as BackgroundWorker;
+
+			// fetch the json code
+			worker.ReportProgress(0, "Requesting card info");
+			string json = FetchJson(worker, RingsDB + "api/public/cards/").Result;
+
+			worker.ReportProgress(50, "Parsing card info");
+			JArray jsonCards = JArray.Parse(json);
+
+			worker.ReportProgress(0, "Download images");
+			List<Card> cards = jsonCards.Select(x => new Card(x)).ToList();
+
+			int cardIx = 0;
+			foreach (Card c in cards)
+			{
+				int progress = (int)((cardIx * 100f) / cards.Count);
+				string text = $"{cardIx + 1} / {cards.Count}: {c.Name}";
+				worker.ReportProgress(progress, $"Checking {text}");
+				DownloadCardImage(c);
+				cardIx++;
+			}
+		}
+
+
+
+		private void DbBackgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+		{
+			SetProcess(e.ProgressPercentage, e.UserState as string);
+		}
+
+
+
+		private void DbBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+		{
+			UpdateDbButton.Enabled = true;
+			SetProcess(0, e.Cancelled ? "Cancelled" : (e.Error == null ? "Done" : "Error: " + e.Error.Message));
 		}
 
 
@@ -228,17 +360,7 @@ namespace lotrlcg
 				worker.ReportProgress((i * 100) / missingCards.Count, $"{i} / {missingCards.Count} {missingCards[i].Name}");
 
 				// download card image
-				string imgPath = CacheDir + "/" + Path.GetFileName(c.Imagesrc);
-				if (!File.Exists(imgPath))
-				{
-					using (WebClient client = new WebClient())
-					{
-						client.DownloadFile(new Uri(RingsDB + c.Imagesrc), imgPath);
-					}
-				}
-
-				// create Image
-				Image img = Image.FromFile(imgPath);
+				Image img = GetCardImage(c);
 
 				// duplicate single cards
 				cardImages.Add(img);
